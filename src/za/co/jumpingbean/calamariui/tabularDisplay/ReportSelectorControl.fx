@@ -68,6 +68,8 @@ public class ReportSelectorControl extends CustomNode {
             text:"Get Data"
             disable:bind Main.asyncTaksInProgress;
             onMouseClicked:function(event:MouseEvent){
+                    //switch aggregation off.
+                    tableDisplay.showingAggregate=false;
                     if (picker.selectedIndex==0) tableDisplay.reportType=tableDisplay.reportUserDetail;
                     if (picker.selectedIndex==1) tableDisplay.reportType=tableDisplay.reportDomainDetail;
                     if (picker.selectedIndex==2) tableDisplay.reportType=tableDisplay.reportContentTypeDetail;
@@ -77,7 +79,7 @@ public class ReportSelectorControl extends CustomNode {
             }
         }
 
-       var container=VBox{
+       def container=VBox{
             nodeHPos:HPos.CENTER;
             spacing:10
             content:[
@@ -100,7 +102,7 @@ public class ReportSelectorControl extends CustomNode {
        ]
        }
 
-       var parent:VBox=VBox {
+       def parent:VBox=VBox {
             nodeHPos:HPos.CENTER;
             spacing:10
             content:[

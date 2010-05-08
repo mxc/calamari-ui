@@ -26,11 +26,9 @@ import za.co.jumpingbean.calamariui.common.DataLoadingIndicator;
 import za.co.jumpingbean.calamariui.common.Logo;
 import za.co.jumpingbean.calamariui.common.DateCriteriaControls;
 import za.co.jumpingbean.calamariui.common.DisplaySelector;
-import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import za.co.jumpingbean.calamariui.common.ErrorLabel;
 import za.co.jumpingbean.calamariui.Main;
 
 /**
@@ -44,12 +42,11 @@ def topSitesHits = ChartDataListWrapper{};
 def topSitesBytes = ChartDataListWrapper{};
 def topUsersHits = ChartDataListWrapper{};
 def topUsersBytes=ChartDataListWrapper{};
-public var startDate:GregorianCalendar on replace {println ("replace in chartdisplay...")};
+public var startDate:GregorianCalendar;
 public var endDate:GregorianCalendar;
-public var startX1:Number;
-public var startY1:Number;
 
-def scale=1;
+
+//def scale=1;
 def count=10;
 var display:VBox;
 public var width:Number;
@@ -79,10 +76,10 @@ var pollerDone=false on replace oldvalue{
                 pie3.title="Top Sites By MBytes from {Utils.formatDatePrettyPrint(startDate)} to {Utils.formatDatePrettyPrint(endDate)}";
                 pie4.title="Top Users By MBytes from {Utils.formatDatePrettyPrint(startDate)} to {Utils.formatDatePrettyPrint(endDate)}";
                 var errorMessage;
-                if (topSitesHits.error) errorMessage="Chart 1 {topSitesHits.errorMessage}";
-                if (topSitesBytes.error) errorMessage="{errorMessage} Chart 2 {topSitesBytes.errorMessage}";
-                if (topUsersHits.error) errorMessage="{errorMessage} Chart 3 {topUsersHits.errorMessage}";
-                if (topUsersBytes.error) errorMessage="{errorMessage} Chart 4 {topUsersBytes.errorMessage}";
+                if (topSitesHits.error) errorMessage="Chart 1 : {topSitesHits.errorMessage}";
+                if (topSitesBytes.error) errorMessage="{errorMessage} Chart 2 : {topSitesBytes.errorMessage}";
+                if (topUsersHits.error) errorMessage="{errorMessage} Chart 3 : {topUsersHits.errorMessage}";
+                if (topUsersBytes.error) errorMessage="{errorMessage} Chart 4 : {topUsersBytes.errorMessage}";
                 println("{errorMessage}");
                 if (errorMessage.length()>50) errorMessage="{errorMessage.substring(0,50)}...";
                 if (errorMessage!=null) insertErrorMessage(errorMessage);
@@ -181,8 +178,8 @@ public function removeDisplaySelector(displaySelector:DisplaySelector){
                                     legendVisible:true;
                                     pieLabelVisible:false;
                                     legendSide:Side.TOP
-                                    scaleX: bind scale
-                                    scaleY:bind scale
+                                    //scaleX: bind scale
+                                    //scaleY:bind scale
                                 },
                            pie2= PieChart3D{
                                     data: bind topUsersHits.list;
@@ -191,8 +188,8 @@ public function removeDisplaySelector(displaySelector:DisplaySelector){
                                     legendVisible:true;
                                     pieLabelVisible:false;
                                     legendSide:Side.TOP
-                                    scaleX: bind scale
-                                    scaleY:bind scale
+                                    //scaleX: bind scale
+                                    //scaleY:bind scale
                                 },
                             pie3=PieChart3D{
                                     data: bind topSitesBytes.list;
@@ -201,8 +198,8 @@ public function removeDisplaySelector(displaySelector:DisplaySelector){
                                     pieLabelVisible:false;
                                     legendVisible:true;
                                     legendSide:Side.TOP
-                                    scaleX: bind scale
-                                    scaleY:bind scale
+                                    //scaleX: bind scale
+                                    //scaleY:bind scale
                                },
                                pie4=PieChart3D{
                                     data: bind topUsersBytes.list;
@@ -211,8 +208,8 @@ public function removeDisplaySelector(displaySelector:DisplaySelector){
                                     legendVisible:true;
                                     pieLabelVisible:false;
                                     legendSide:Side.TOP
-                                    scaleX: bind scale
-                                    scaleY:bind scale
+                                    //scaleX: bind scale
+                                    //scaleY:bind scale
                                }
                            ]
                            }

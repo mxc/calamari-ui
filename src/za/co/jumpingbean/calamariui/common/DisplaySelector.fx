@@ -11,7 +11,6 @@ import javafx.scene.Node;
 import org.jfxtras.scene.control.XPicker;
 import org.jfxtras.scene.control.XPickerType;
 import za.co.jumpingbean.calamariui.Main;
-import za.co.jumpingbean.calamariui.tabularDisplay.ReportSelectorControl;
 import za.co.jumpingbean.calamariui.tabularDisplay.TabularDisplay;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.Label;
@@ -41,7 +40,7 @@ public class DisplaySelector extends CustomNode {
                         }
                         picker =XPicker{
                             preset:default,
-                            items: ["Charts","Table","Admin"]
+                            items: ["Pie Charts","Time Series","Table Data","Admin"]
                             pickerType:XPickerType.DROP_DOWN
                             dropDownHeight:60
                             onIndexChange:function(index:Integer){
@@ -49,7 +48,10 @@ public class DisplaySelector extends CustomNode {
                                   FX.deferAction(function():Void { main.showChartDisplay()});
                               }
                               else if (index==1) {
-                                  FX.deferAction(function():Void{ main.showTabularDisplay(TabularDisplay.reportAll,null)});
+                                  FX.deferAction(function():Void{ main.showTimeSeriesChartDisplay()});
+                              }
+                              else if (index==2) {
+                                  FX.deferAction(function():Void{ main.showTabularDisplay(TabularDisplay.reportAll,null,null,null,false)});
                               } else{
                                 FX.deferAction(function():Void { main.showAdminDisplay()});
                               }

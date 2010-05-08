@@ -18,6 +18,9 @@ import javafx.io.http.HttpHeader;
 import javafx.io.http.URLConverter;
 import javafx.data.Pair;
 import java.lang.Exception;
+import za.co.jumpingbean.calamariui.timeSeriesChartDisplay.LineChartDateData;
+import java.sql.Timestamp;
+import javafx.scene.chart.part.TimeSeriesAxis;
 
 /**
  * @author mark
@@ -27,7 +30,7 @@ public class DataService {
 
        var main:Main;
 
-       def baseUrl="http://192.168.1.216:9998";
+       def baseUrl="http://192.168.1.229:9998";
 
         public function getTopSitesByHits(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
              getChartData(startDate,endDate,count,data,"dataservice/topsitesbyhits","hits");
@@ -59,10 +62,10 @@ public class DataService {
                              tmpData.value=point.bytes/(1024*1024);
                         }
                         if (url.indexOf("site")!=-1) {
-                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportDomainDetail,tmpData.label);};
+                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportDomainDetail,tmpData.label,startDate,endDate,true);};
                         }
                         else {
-                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDetail,tmpData.label);};
+                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDetail,tmpData.label,startDate,endDate,true);};
                         }
                         insert tmpData into data.list;
                     }
@@ -106,7 +109,6 @@ public class DataService {
              getSquidLogDetailData(startDate,endDate,"dataservice/contenttypedetails",contentType,data);
         }
 
-
         function getStringResult(url:String,result:StringResultWrapper){
             def request:HttpRequest=HttpRequest{
                 location: "{baseUrl}/{url}"
@@ -117,12 +119,12 @@ public class DataService {
                 }
                 onInput:function(is:InputStream){
                     result.result=readInputBuffer(is);
-                    println("--{result.result}");
+                    //println("--{result.result}");
                }
                 onDone: function(){
                    println("done...");
                    if (request.error!=null){
-                       println("error---{result.result}");
+                       //println("error---{result.result}");
                        result.error=true;
                        result.done=true;
                        //result.result=readInputBuffer(request.error);
@@ -130,7 +132,7 @@ public class DataService {
                         //result.result="success";
                         result.done=true;
                     }
-                    println("result---{result.result}");
+                    //println("result---{result.result}");
                 }
             }
             request.start();
@@ -197,9 +199,6 @@ public class DataService {
                 //}
                 ];
                 onOutput:function(os:OutputStream){
-                     //println("writing...{pair.toString()}");
-                     //def string="posting...";
-                     //os.write(string.getBytes());
                      os.close();
                 }
                 onException:function(ex:Exception){
@@ -208,12 +207,12 @@ public class DataService {
                 }
                 onInput:function(is:InputStream){
                     result.result=readInputBuffer(is);
-                    println("{tmpUrl}--{result.result}");
+                    //println("{tmpUrl}--{result.result}");
                }
                 onDone: function(){
                    println("done...");
                    if (request.error!=null){
-                       println("error---{result.result}");
+                       //println("error---{result.result}");
                        result.error=true;
                        result.done=true;
                        //result.result=readInputBuffer(request.error);
@@ -221,7 +220,7 @@ public class DataService {
                         result.result="success";
                         result.done=true;
                     }
-                    println("result---{result.result}");
+                    //println("result---{result.result}");
                 }
             }
             request.start();
@@ -260,5 +259,143 @@ public class DataService {
             return byteArray.toString();
         }
 
+        public function getImportHistory(startDate:GregorianCalendar,endDate:GregorianCalendar,data:ImportFileListWrapper){
+                getImportHistory(startDate,endDate,"admin/importhistory",data);
+        }
 
+        function getImportHistory(startDate:GregorianCalendar,endDate:GregorianCalendar,url:String,data:ImportFileListWrapper){
+            def begin = Utils.formatDate(startDate);
+            def end = Utils.formatDate(endDate);
+            def parser = ImportFileRecordParser{};
+            var tmpUrl = "{baseUrl}/{url}/{begin}/{end}";
+            //println("{tmpUrl}");
+            var request:UIHttpRequest=UIHttpRequest{
+                location: tmpUrl;
+                parser: parser;
+                onException:function(ex:Exception){
+                       data.error=true;
+                       data.errorMessage=ex.getMessage();
+                }
+                onDone: function(){
+                   println("done");
+                   if ( data.error){
+                        data.done=true;
+                   }else if (sizeof parser.list>0){
+                    data.list=parser.list;
+                    data.done=true;
+                    data.error=false;
+                  }else{
+                    data.done=true;
+                    data.error=true;
+                    data.errorMessage="0 records returned"
+                  }
+                }
+            }
+            request.start();
+        }
+
+        public function getDomainHitsTimeSeriesDataByHour(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,domain:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/domainhitsbyhour",domain);
+        }
+
+        public function getUserHitsTimeSeriesDataByHour(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,user:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/userhitsbyhour",user);
+        }
+
+        public function getDomainHitsTimeSeriesDataByDay(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,domain:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/domainhitsbyday",domain);
+        }
+
+        public function getUserHitsTimeSeriesDataByDay(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,user:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/userhitsbyday",user);
+        }
+
+        public function getDomainSizeTimeSeriesDataByHour(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,domain:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/domainsizebyhour",domain);
+        }
+
+        public function getUserSizeTimeSeriesDataByHour(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,user:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/usersizebyhour",user);
+        }
+
+        public function getDomainSizeTimeSeriesDataByDay(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,domain:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/domainsizebyday",domain);
+        }
+
+        public function getUserSizeTimeSeriesDataByDay(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,user:String){
+            getTimeSeriesData(startDate,endDate,data,"dataservice/usersizebyday",user);
+        }
+
+        function getTimeSeriesData(startDate:GregorianCalendar,endDate:GregorianCalendar,data:TimeSeriesDataListWrapper,url:String,parameter:String){
+            def begin = Utils.formatDate(startDate);
+            def end = Utils.formatDate(endDate);
+            def parser = TimeSeriesDataPointParser{};
+            println("{baseUrl}/{url}/{begin}/{end}/{parameter}");
+            var request:UIHttpRequest=UIHttpRequest{
+                location: "{baseUrl}/{url}/{begin}/{end}/{parameter}";
+                parser: parser;
+                onException:function(ex:Exception){
+                       data.error=true;
+                       data.errorMessage=ex.getMessage();
+                }
+                onDone: function(){
+                   if (data.error){
+                        data.done=true;
+                   }else if (sizeof parser.list>0){
+                    var minxValue:Timestamp;
+                    var maxxValue:Timestamp;
+                    var minyValue:Number;
+                    var maxyValue:Number;
+                    var list:LineChartDateData[];
+                    println("{baseUrl}/{url}/{begin}/{end}/{parameter}");
+                    for (point in parser.list){
+                        var tmpData =LineChartDateData{}
+                        tmpData.xDateTimeValue=point.date;
+
+                        //convert from bytes to kilobytes
+
+                        if (url.indexOf("size")==-1) {
+                            tmpData.yMeasureValue=point.value as Float
+                        } else {
+                            tmpData.yMeasureValue=(point.value/(1024)) as Float;
+                         }
+                        //get the range min max values
+                        if (minyValue>tmpData.yMeasureValue) minyValue=tmpData.yMeasureValue;
+                        if (maxyValue<tmpData.yMeasureValue) maxyValue=tmpData.yMeasureValue;
+
+                        if (minxValue==null or minxValue.compareTo(tmpData.xDateTimeValue)>0) minxValue=tmpData.xDateTimeValue;
+                        if (maxxValue==null or maxxValue.compareTo(tmpData.xDateTimeValue)<0) maxxValue=tmpData.xDateTimeValue;
+                        var tmpStartDate = new GregorianCalendar();
+                        tmpStartDate.setTimeInMillis(tmpData.xDateTimeValue.getTime());
+
+                        if (url.indexOf("domain")!=-1){
+                                tmpData.action=function(){
+                                   main.showTabularDisplay(TabularDisplay.reportDomainDetail,parameter,tmpStartDate,tmpStartDate,true);
+                            }
+                        }else{
+                            tmpData.action=function(){
+                                main.showTabularDisplay(TabularDisplay.reportUserDetail,parameter,tmpStartDate,tmpStartDate,true);
+                            }
+                        }
+
+                        insert tmpData into list;
+                    }
+                    println("done....");
+                    data.minxValue=minxValue;
+                    data.maxxValue=maxxValue;
+                    data.minyValue=minyValue;
+                    data.maxyValue=maxyValue;
+                    data.name=parameter;
+                    data.list=list;
+                    data.done=true;
+                    data.error=false;
+                   }else{
+                    data.done=true;
+                    data.error=true;
+                    data.errorMessage="0 records returned"
+                  }
+                }
+            }
+            request.start();
+        }
 }

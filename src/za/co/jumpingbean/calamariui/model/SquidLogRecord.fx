@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 public class SquidLogRecord  extends XObject{
         public var serverInfo:String;
-        public var accessDate:Timestamp ;
+        public var accessDate:Timestamp;
         public var elapsed:Integer;
         public var remoteHost:String;
         public var codeStatus:String;

@@ -68,8 +68,8 @@ public class TabularDisplay extends CustomNode,Poller{
 def service:DataService= DataService{};
 public-read def logEntries = SquidLogRecordListWrapper{};//reference to untransformed data
 public var tableData:SquidLogRecord[]; //the data to dispaly - may or may not be transformed
-public var startDate:GregorianCalendar;// holds data start date
-public var endDate:GregorianCalendar;// holds data end date
+public var startDate:GregorianCalendar on replace {showingAggregate=false};// holds data start date. Reset showingAggregate flag if necessary
+public var endDate:GregorianCalendar on replace {showingAggregate=false};// holds data end date. Reset showingAggregate flag if necessary to emable detailed display
 public var showingAggregate:Boolean=false;
 var vbox:VBox; //reference to vbox in header for insertion of data loading
 def dataLoadingIndicator=DataLoadingIndicator{};
@@ -101,7 +101,10 @@ var pollerDone=false on replace oldvalue{
                 if (logEntries.errorMessage.length()>50)
                     errorMessage="{logEntries.errorMessage.substring(0,50)}..."
                 else errorMessage=logEntries.errorMessage;
-                if (logEntries.error) insertErrorMessage(errorMessage);
+                if (logEntries.error) {
+                    println("{errorMessage}");
+                    insertErrorMessage(errorMessage);
+                }
             }
 };
 
@@ -142,7 +145,7 @@ public function getModel(){
                    override public function transformEntry (entry : Object) : Row {
                         var record = entry as SquidLogRecord;
                         var cells:Cell[];
-                        if (Sequences.indexOf(hideColumns,"accessDate")==-1) insert { StringCell { value: Utils.getDateFromTimestamp(record.accessDate).toString(); editable:false }} into cells;
+                        if (Sequences.indexOf(hideColumns,"accessDate")==-1) insert { TimestampCell { value: record.accessDate; editable:false }} into cells;
                         if (Sequences.indexOf(hideColumns,"serverInfo")==-1) insert { StringCell { value: record.serverInfo editable:false}}  into cells;
                         if (Sequences.indexOf(hideColumns,"elapsed")==-1) insert { IntegerCell { value: record.elapsed editable:false}}  into cells;
                         if (Sequences.indexOf(hideColumns,"remoteHost")==-1)insert { StringCell { value: record.remoteHost editable:false}}  into cells;

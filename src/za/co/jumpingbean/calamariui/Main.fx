@@ -18,14 +18,16 @@ import za.co.jumpingbean.calamariui.adminDisplay.AdminDisplay;
 import za.co.jumpingbean.calamariui.common.DisplaySelector;
 import javafx.async.RunnableFuture;
 import javafx.async.JavaTaskBase;
+import za.co.jumpingbean.calamariui.service.Utils;
+import za.co.jumpingbean.calamariui.timeSeriesChartDisplay.TimeSeriesChartDisplay;
 
 /**
  * @author mark
  */
 
 
-var startDate:GregorianCalendar= new GregorianCalendar(2010,2,31);
-var endDate:GregorianCalendar= new GregorianCalendar(2010,2,31);
+var endDate:GregorianCalendar=Utils.getCurrentDate();
+var startDate:GregorianCalendar=Utils.getFirstDayOfMonth(endDate);
 var scene:Scene;
 
 static public var asyncTaksInProgress:Boolean;
@@ -52,7 +54,7 @@ def gradientFill:LinearGradient =  LinearGradient {
 
 //Build our Pie Chart Scene
 def chartControl = ChartDisplay{
-    startDate:startDate;
+    startDate: startDate;
     endDate:endDate;
     width:bind scene.width
     height:bind scene.height
@@ -68,46 +70,76 @@ def tabularControl = TabularDisplay{
 def displaySelector=DisplaySelector{default:DisplaySelector.chartDisplay}
 
 def adminControl = AdminDisplay{
+    width:bind scene.width
+    height:bind scene.height
 }
 
+def  timeSeriesChartDisplay = TimeSeriesChartDisplay{
+    startDate:startDate
+    endDate:endDate
+    width:bind scene.width
+    height:bind scene.height
+}
 
 //Use this function to hide/show panels
-public function showTabularDisplay(reportType:String,parameter:String){
-    var runFlag:Boolean=false;
-    if (tabularControl.reportType!=reportType) {
-            tabularControl.reportType=reportType;
-            runFlag=true;
-    }
-    if (tabularControl.reportParameter!=parameter){
-           tabularControl.reportParameter=parameter;
-           runFlag=true;
-    }
+public function showTabularDisplay(reportType:String,parameter:String,startDate:GregorianCalendar,endDate:GregorianCalendar,flag:Boolean){
+    //var runFlag:Boolean=flag;
+    if (startDate!=null) tabularControl.startDate=startDate;
+    if (endDate!=null) tabularControl.endDate=endDate;
+    tabularControl.reportType=reportType;
+    tabularControl.reportParameter=parameter;
+//    if (tabularControl.reportType!=reportType) {
+//            tabularControl.reportType=reportType;
+//            runFlag=true;
+//    }
+//    if (tabularControl.reportParameter!=parameter){
+//           tabularControl.reportParameter=parameter;
+//           runFlag=true;
+//    }
     chartControl.removeDisplaySelector(displaySelector);
     adminControl.removeDisplaySelector(displaySelector);
+    timeSeriesChartDisplay.removeDisplaySelector(displaySelector);
     tabularControl.insertDisplaySelector(displaySelector);
     delete chartControl from scene.content;
     delete adminControl from scene.content;
+    delete timeSeriesChartDisplay from scene.content;
     insert tabularControl into scene.content;
-    if (runFlag) tabularControl.startPoller();
+    if (flag) tabularControl.startPoller();
 }
 
 //Use this function to hide/show panels
 public function showChartDisplay(){
     adminControl.removeDisplaySelector(displaySelector);
     tabularControl.removeDisplaySelector(displaySelector);
+    timeSeriesChartDisplay.removeDisplaySelector(displaySelector);
     chartControl.insertDisplaySelector(displaySelector);
     delete tabularControl from scene.content;
     delete adminControl from scene.content;
+    delete timeSeriesChartDisplay from scene.content;
     insert chartControl into scene.content;
 }
 
 public function showAdminDisplay(){
     tabularControl.removeDisplaySelector(displaySelector);
     chartControl.removeDisplaySelector(displaySelector);
+    timeSeriesChartDisplay.removeDisplaySelector(displaySelector);
     adminControl.insertDisplaySelector(displaySelector);
     delete tabularControl from scene.content;
     delete chartControl from scene.content;
+    delete timeSeriesChartDisplay from scene.content;
     insert adminControl into scene.content;
+}
+
+public function showTimeSeriesChartDisplay(){
+    tabularControl.removeDisplaySelector(displaySelector);
+    chartControl.removeDisplaySelector(displaySelector);
+    adminControl.removeDisplaySelector(displaySelector);
+    timeSeriesChartDisplay.insertDisplaySelector(displaySelector);
+    delete tabularControl from scene.content;
+    delete chartControl from scene.content;
+    delete adminControl from scene.content;
+    insert timeSeriesChartDisplay into scene.content;
+    //timeSeriesChartDisplay.startPoller();
 }
 
 
