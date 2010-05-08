@@ -66,23 +66,27 @@ public class Aggregator extends TaskCallback {
                 var tmpKey=key;
                 if (key=="Date"){
                     tmpKey="accessDate";
-                }else if (key=="Date/Time"){
+                }else if (key=="Date/Hour"){
                     tmpKey="accessDate";
                 }
                 def variable:FXVarMember = cls.getVariable(Utils.toClassCamelCase(tmpKey));
                 def fxVal = variable.getValue(fxCurrentObj);
                 var stringVal:String;
                 if (key=="Date"){
-                    var millisec=record.accessDate.getTime()/86400000;
+                    var millisec=record.accessDate.getTime()/86400000 as Long;
                     newRecord.accessDate=new Timestamp(millisec*86400000);
+                    println("Date={Utils.getDateFromTimestamp(newRecord.accessDate)}");
                     stringVal = Utils.formatDatePrettyPrint(Utils.getDateFromTimestamp(newRecord.accessDate));
                 }else if (key=="Date/Time"){
-                    var millisec=record.accessDate.getTime()/3600000;
+                    var millisec=record.accessDate.getTime()/3600000 as Long;
                     newRecord.accessDate=new Timestamp(millisec*3600000);
-                    stringVal = fxVal.getValueString();
-                    stringVal = Utils.formatDatePrettyPrint(Utils.getDateFromTimestamp(newRecord.accessDate));
+                    println("Date/Time={Utils.getDateFromTimestamp(newRecord.accessDate)}");
+                    stringVal = Utils.formatDatePrettyLongPrint(newRecord.accessDate);
+                } else {
+                        stringVal = fxVal.getValueString();
+                        variable.setValue(fxNewRecordObj,fxVal);
                 }
-                else variable.setValue(fxNewRecordObj,fxVal);
+
                 tmpString = "{tmpString}{stringVal}";
         }
 

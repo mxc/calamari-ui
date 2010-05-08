@@ -33,8 +33,8 @@ public class TimestampCell extends Cell{
         value = newValue as Timestamp;
     }
 
-    override public function toString(){
-      return Utils.formatDatePrettyLongPrint(value);
-    }
+//    override public function toString(){
+//      return Utils.formatDatePrettyLongPrint(value);
+//    }
 
 }
