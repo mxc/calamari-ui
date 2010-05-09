@@ -33,7 +33,7 @@ import za.co.jumpingbean.calamariui.Main;
 
 public class DateCriteriaControls extends CustomNode {
 
-    public var startDate:GregorianCalendar on replace {println ("replaced in datecriteriacontrol ....")};
+    public var startDate:GregorianCalendar;
     public var endDate:GregorianCalendar;
     public var display:Poller;
 

@@ -50,7 +50,7 @@ public class UIHttpRequest {
              };
              request.onToRead=function(bytes:Long){
                  totalMB=totalMB+(bytes/(1024*1024));
-                 println("TotalMB={totalMB}");
+
              }
 
              request.method=HttpRequest.GET;
