@@ -124,6 +124,7 @@ public function showAdminDisplay(){
     chartControl.removeDisplaySelector(displaySelector);
     timeSeriesChartDisplay.removeDisplaySelector(displaySelector);
     adminControl.insertDisplaySelector(displaySelector);
+    adminControl.getAdminInfo();
     delete tabularControl from scene.content;
     delete chartControl from scene.content;
     delete timeSeriesChartDisplay from scene.content;

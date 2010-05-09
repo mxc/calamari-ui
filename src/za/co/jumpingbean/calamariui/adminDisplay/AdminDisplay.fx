@@ -33,6 +33,10 @@ import za.co.jumpingbean.calamariui.service.Utils;
 import java.util.GregorianCalendar;
 import za.co.jumpingbean.calamariui.service.ImportFileListWrapper;
 import za.co.jumpingbean.calamariui.common.DateCriteriaControls;
+import java.io.File;
+import javafx.util.Properties;
+import java.io.FileOutputStream;
+import javafx.scene.control.CheckBox;
 
 /**
  * @author mark
@@ -51,31 +55,56 @@ public class AdminDisplay extends CustomNode{
     public var width:Number;
     public var height:Number;
 
-    var importFileResult:StringResultWrapper=StringResultWrapper{
+    //Hold the result of any currently running import on the server
+    def importFileResult:StringResultWrapper=StringResultWrapper{
             override var result="No import under way" on replace {
                 if(result=="no import in progress")  {
                         adminPoller.stop();
                 }
             };
     }
-    
-    var txtLogFileLocation:TextBox;
+
+    //Holds the response to a call to the initdb service.
+    def initDBResult:StringResultWrapper=StringResultWrapper{
+            override var result="" on replace {
+                    lblMessage.text=result;
+                    btnDBInit.disable=false;
+                    chkDrop.selected=false;
+             }
+     }
+
+    var btnDBInit:Button;
+    var txtLogFileLocation:TextBox;//textbox for current value of variable retrieved form web service
+    var txtServerAddress:TextBox;//textbox for current value of variable retrieved form web service
+    var lblMessage:Label; //message box for init db - to get status from web call
+    var chkDrop:CheckBox;
 
     public function insertDisplaySelector(displaySelector:DisplaySelector){
-        insert displaySelector after vbox.content[2]
+        insert displaySelector after vbox.content[4]
     }
 
     public function removeDisplaySelector(displaySelector:DisplaySelector){
         delete displaySelector from vbox.content
     }
 
-    function getAdminInfo(){
+    public function getAdminInfo(){
         service.getAdminData("admin/settings/squidlogfolder",null,squidLogFileLocationResult);
     }
 
     function saveLogFileLocation(){
         service.saveAdminData(txtLogFileLocation.text,squidLogFileLocationResult)
     }
+
+    function saveServerAddress(server:String){
+        def file = new File("calamari-ui.properties");
+        file.createNewFile();
+        def prop: Properties = new Properties();
+        prop.put("server",server);
+        prop.store(new FileOutputStream(file));
+        DataService.baseUrl=server;
+    }
+
+
 
     def adminPoller = Timeline{
         repeatCount: Timeline.INDEFINITE
@@ -92,7 +121,8 @@ public class AdminDisplay extends CustomNode{
     }
 
 
-        //this function is to avoid compile time errors related to bound functions and is called by getTableModel()
+        //this function is to avoid compile time errors related to bound functions and is called by getTableModel(). i.e called from bound
+        //function
          function getModel():ObjectSequenceTableModel{
                 var model = ObjectSequenceTableModel{
                            override public function transformEntry (entry : Object):Row {
@@ -113,11 +143,15 @@ public class AdminDisplay extends CustomNode{
 
     override protected function create () : Node {
         getAdminInfo();//populate text box
+
+        //
+        //Controls to setup log file location
+        //
         def lblLogFileLocation=Label{
             text:"Log File Folder"
             font:Font{size:12 name: "Arial Bold"}
             textFill:Color.DARKGREEN;
-    }
+        }
 
         txtLogFileLocation = TextBox{
             text:bind squidLogFileLocationResult.result with inverse;
@@ -140,6 +174,40 @@ public class AdminDisplay extends CustomNode{
                     ]
         }
 
+        //
+        //Set of controls for Server address
+        //
+        def lblServerAddress=Label{
+            text:"Backend Server Address"
+            font:Font{size:12 name: "Arial Bold"}
+            textFill:Color.DARKGREEN;
+        }
+
+        txtServerAddress = TextBox{
+            text:DataService.baseUrl;
+            columns:45
+        }
+
+        def btnSaveServerAddress=Button{
+            text:"Save Server Address"
+            onMouseClicked:function(event:MouseEvent){
+                saveServerAddress(txtServerAddress.text);
+            }
+        }
+
+        def serverAddressControls = HBox{
+            spacing:10
+            content: [
+                        lblServerAddress,
+                        txtServerAddress,
+                        btnSaveServerAddress
+                    ]
+        }
+
+
+        //
+        //Import data controls
+        //
         def btnImport:Button = Button{
             text:"Import Data"
             onMouseClicked:function(event:MouseEvent){
@@ -159,6 +227,9 @@ public class AdminDisplay extends CustomNode{
                     ]
         }
 
+        //
+        //Controls for import history
+        //
         def dateCriteriaControlImportHistory:DateCriteriaControls = DateCriteriaControls{
             startDate: bind startDate with inverse
             endDate: bind endDate with inverse
@@ -170,31 +241,65 @@ public class AdminDisplay extends CustomNode{
 
         def table=XSwingTable{
            width:bind width;
-           //height:bind height-controls.height-100//make sure not off scene
            tableModel:getModel()
         }
 
+        //
+        //Controls for DB Init
+        //
 
-        //def importFileHistoryControls=VBox{
-        //    spacing:10
-        //    content: [
-        //               dateCriteriaControlImportHistory,
-        //               table
-       //             ]
-        //}
+
+        chkDrop=CheckBox{
+            text:"Drop Existing Database"
+            font:Font{size:12 name: "Arial Bold"}
+            selected:false
+        }
+
+        btnDBInit=Button{
+            text:"Initialise Database"
+            onMouseClicked:function(event:MouseEvent){
+                if (chkDrop.selected)  service.initDBDropIfExists(initDBResult)
+                else  service.initDB(initDBResult);
+                btnDBInit.disable=true;
+            }
+        }
+
+        lblMessage=Label{
+            text:""
+            font:Font{size:12 name: "Arial Bold"}
+            textFill:Color.DARKGREEN;
+        }
+
+        def initDBControls = HBox{
+            spacing:10
+            content: [
+                        //lblDBCreate,
+                        btnDBInit,
+                        chkDrop,
+                        lblMessage
+                    ]
+        }
+
+
+        //
+        //Grouping of controls for display
+        //
         VBox{
           content:[
                 HBox{
+                    spacing:15
                     content:[
                                 Logo{}
-                                vbox =VBox{
-                                    nodeHPos:HPos.CENTER;
-                                    spacing:10
-                                    content: [
+                                vbox = VBox{
+                                       nodeHPos:HPos.LEFT;
+                                       spacing:10
+                                       content: [
+                                                initDBControls,
                                                 logFileControls,
+                                                serverAddressControls,
                                                 importControls,
-                                                dateCriteriaControlImportHistory,
-                                            ]
+                                                dateCriteriaControlImportHistory
+                                       ]
                                 }
                     ]
                 },

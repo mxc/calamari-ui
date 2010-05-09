@@ -21,21 +21,41 @@ import java.lang.Exception;
 import za.co.jumpingbean.calamariui.timeSeriesChartDisplay.LineChartDateData;
 import java.sql.Timestamp;
 import javafx.scene.chart.part.TimeSeriesAxis;
+import java.io.File;
+import javafx.util.Properties;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 /**
  * @author mark
  */
 
+public  var baseUrl:String;
+
 public class DataService {
 
        var main:Main;
 
-       def baseUrl="http://192.168.1.229:9998";
+       postinit{
+                def file = new File("calamari-ui.properties");
+                file.createNewFile();
+                def prop: Properties = new Properties();
+                prop.load(new FileInputStream(file));
+                baseUrl = prop.get("server");
+                if (baseUrl=="") {
+                    prop.put("server","http://127.0.0.1:8080/Calamari-1.0/resources");
+                    prop.store(new FileOutputStream(file));
+                    baseUrl="http://127.0.0.1:8080/Calamari-1.0/resources";
+                }
+           }
 
         public function getTopSitesByHits(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
              getChartData(startDate,endDate,count,data,"dataservice/topsitesbyhits","hits");
         }
 
+        /*
+           Main function to get Pie Chart Data
+        */
         function getChartData(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper,url:String,type:String){
             def begin = Utils.formatDate(startDate);
             def end = Utils.formatDate(endDate);
@@ -109,6 +129,9 @@ public class DataService {
              getSquidLogDetailData(startDate,endDate,"dataservice/contenttypedetails",contentType,data);
         }
 
+        /**
+           Function to retrieve simple sring results from web service
+        */
         function getStringResult(url:String,result:StringResultWrapper){
             def request:HttpRequest=HttpRequest{
                 location: "{baseUrl}/{url}"
@@ -146,7 +169,18 @@ public class DataService {
            getStringResult("admin/importlogfiles",result);
         }
 
+        public function initDB(result:StringResultWrapper){
+           getStringResult("admin/initdb",result);
+        }
 
+        public function initDBDropIfExists(result:StringResultWrapper){
+                getStringResult("admin/initdb?dropifexists=true",result);
+        }
+
+
+        /**
+            This function is used to retrieve and process detailed log records.
+        */
         function getSquidLogDetailData(startDate:GregorianCalendar,endDate:GregorianCalendar,url:String,param:String,data:SquidLogRecordListWrapper){
             def begin = Utils.formatDate(startDate);
             def end = Utils.formatDate(endDate);
@@ -182,8 +216,6 @@ public class DataService {
         public function saveAdminData(location:String,result:StringResultWrapper){
             def urlConverter = URLConverter{};
             def encodedMessage = urlConverter.encodeParameters(Pair{name:"path" value:location});
-            //def pair = Pair{name:"path" value:location}
-            //def encodedMessageSize: Integer = encodedMessage.getBytes().length;
             var tmpUrl = "{baseUrl}/admin/settings/squidlogfolder?{encodedMessage}";
             def request:HttpRequest=HttpRequest{
                 location: tmpUrl
@@ -212,15 +244,12 @@ public class DataService {
                 onDone: function(){
                    println("done...");
                    if (request.error!=null){
-                       //println("error---{result.result}");
                        result.error=true;
                        result.done=true;
-                       //result.result=readInputBuffer(request.error);
                     }else{
-                        result.result="success";
+                        result.result="successfully save location: {location}";
                         result.done=true;
                     }
-                    //println("result---{result.result}");
                 }
             }
             request.start();
@@ -238,10 +267,16 @@ public class DataService {
                     data.result=result;
                     data.done=true;
                 }
+                onError: function(is:InputStream){
+                    result=readInputBuffer(is);
+                    data.result="Not initialised";
+                    data.error=true;
+                    data.done=true;
+                }
                 onDone: function(){
                    if (request.error!=null){
                        result=readInputBuffer(request.error);
-                       data.result=result;
+                       data.result=result.substring(0,50);
                        data.error=true;
                     }
                 }
