@@ -37,25 +37,30 @@ public class ReportSelectorControl extends CustomNode {
                 text:"Username"
           }
 
-          def label2 = Label{
+          def lblReportType = Label{
                 text:"Report Type"
+          }
+
+          def label2=Label{
+                text:"Domain"
           }
         
           def picker:XPicker = XPicker{
                   pickerType: XPickerType.DROP_DOWN
                   cyclic:false
-                  dropDownHeight:80
+                  dropDownHeight:90
                   
                   layoutInfo: LayoutInfo {
-                      width: 80
+                      width: 120
                   }
-                  items: ["User","Domain","Content Type","All"]
+                  items: ["User","Domain","User/Domain","Content Type","All"]
                   preset: 0;
                   onIndexChange:function (index:Integer){
-                        if (index==0) {label.text="Username";parameter.disable=false}
-                        else if (index==1) {label.text="Domain";parameter.disable=false}
-                        else if (index==2) {label.text="Content Type";parameter.disable=false}
-                        else if (index==3) {label.text="NA"; parameter.text=""; parameter.disable=true};
+                        if (index==0) {label.text="Username";label2.text="";parameter2.text=""; parameter.disable=false; parameter2.disable=true; }
+                        else if (index==1) {label.text="Domain"; label2.text=""; parameter2.text="";parameter.disable=false; parameter2.disable=true; }
+                        else if (index==2) {label.text="Username"; label2.text="Domain";parameter.disable=false; parameter2.disable=false; }
+                        else if (index==3) {label.text="Content Type";label2.text=""; parameter2.text="" ;parameter.disable=false; parameter2.disable=true; }
+                        else if (index==4) {label.text="NA"; label2.text=""; parameter.text=""; parameter2.text=""; parameter.disable=true;;parameter2.disable=true; };
                  }
         }
 
@@ -63,6 +68,13 @@ public class ReportSelectorControl extends CustomNode {
             columns:35
             editable:true
         }
+
+        def parameter2=TextBox{
+            columns:25
+            editable:true
+            disable:true
+        }
+
 
         def btnGetData= Button{
             text:"Get Data"
@@ -72,9 +84,11 @@ public class ReportSelectorControl extends CustomNode {
                     tableDisplay.showingAggregate=false;
                     if (picker.selectedIndex==0) tableDisplay.reportType=tableDisplay.reportUserDetail;
                     if (picker.selectedIndex==1) tableDisplay.reportType=tableDisplay.reportDomainDetail;
-                    if (picker.selectedIndex==2) tableDisplay.reportType=tableDisplay.reportContentTypeDetail;
-                    if (picker.selectedIndex==2) tableDisplay.reportType=tableDisplay.reportAll;
+                    if (picker.selectedIndex==2) tableDisplay.reportType=tableDisplay.reportUserDomainDetail;
+                    if (picker.selectedIndex==3) tableDisplay.reportType=tableDisplay.reportContentTypeDetail;
+                    if (picker.selectedIndex==4) tableDisplay.reportType=tableDisplay.reportAll;
                     tableDisplay.reportParameter=parameter.text;
+                    tableDisplay.reportParameter2=parameter2.text;
                     tableDisplay.startPoller();
             }
         }
@@ -90,10 +104,12 @@ public class ReportSelectorControl extends CustomNode {
                             nodeVPos:VPos.CENTER;
                             spacing:10
                             content:[
-                                      label2,
+                                      lblReportType,
                                       picker,
                                       label,
-                                      parameter
+                                      parameter,
+                                      label2,
+                                      parameter2
                                    ]
                        },
                        btnGetData

@@ -59,6 +59,8 @@ public def reportUserDetail="userDetail";
 public def reportDomainDetail="domainDetail";
 public def reportContentTypeDetail="contentTypeDetail";
 public def reportAll="details";
+public def reportUserDomainDetail="userDomain";
+
 public var dateControl:DateCriteriaControls;
 public-read def standardColumnsToHide:String[]=["elapsed","parameters","serverInfo","peerStatusPeerHost","method","codeStatus","hits","accessDate","bytesKB"];
 
@@ -78,6 +80,7 @@ public var width:Number;
 public var height:Number;
 public var reportType:String;//set to determine the report to collect data for.
 public var reportParameter:String;//prarmeter placeholder
+public var reportParameter2:String;
 var reportTitle:String;//placeholder for title
 var controls:HBox;//rference to controls hbox to get height.
 var errorLabel:Label;
@@ -120,6 +123,7 @@ def tabularPoller = Timeline{
                     if (not logEntries.processing) {
                             if (reportType==reportUserDetail) service.getUserDetails(startDate, endDate,reportParameter,logEntries);
                             if (reportType==reportDomainDetail) service.getDomainDetails(startDate, endDate,reportParameter,logEntries);
+                            if (reportType==reportUserDomainDetail) service.getUserDomainDetails(startDate, endDate,reportParameter,reportParameter2,logEntries);
                             if (reportType==reportContentTypeDetail) service.getContentTypeDetails(startDate, endDate,reportParameter,logEntries);
                             if (reportType==reportAll) service.getDetails(startDate, endDate,logEntries);
                             logEntries.processing=true;
@@ -278,6 +282,7 @@ override public function startPoller(){
 
 public function startIndicator(text:String){
          reportTitle="{StringUtil.camelToTitleCase(reportType)} from {Utils.formatDatePrettyPrint(startDate)} to {Utils.formatDatePrettyPrint(endDate)} for parameter {reportParameter}";
+         if (reportParameter2!=null and reportParameter2!="") reportTitle="{reportTitle} and domain {reportParameter2}"; //if this is a user/domain report show details
          dataLoadingIndicator.text=text;
          dataLoadingIndicator.start();
          //this check is in case a sort/aggregation is running and the user

@@ -15,6 +15,7 @@ import za.co.jumpingbean.calamariui.tabularDisplay.TabularDisplay;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.Label;
 import javafx.geometry.VPos;
+import javafx.scene.layout.LayoutInfo;
 
 /**
  * @author mark
@@ -28,7 +29,8 @@ public class DisplaySelector extends CustomNode {
 
     var main:Main;
     public var default:Integer=0;
-    var picker:XPicker;
+    public var picker:XPicker;
+
 
     override protected function create () : Node {
         HBox{
@@ -40,18 +42,22 @@ public class DisplaySelector extends CustomNode {
                         }
                         picker =XPicker{
                             preset:default,
-                            items: ["Pie Charts","Time Series","Table Data","Admin"]
+                            items: ["Top 10 Hits/Bytes Charts ","Top 10 Hits/Bytes By User/Domain","Time Series","Table Data","Admin"]
                             pickerType:XPickerType.DROP_DOWN
-                            dropDownHeight:60
+                            dropDownHeight:100
+                            layoutInfo: LayoutInfo {
+                                  width: 190
+                            }
                             onIndexChange:function(index:Integer){
                               if (index==0) {
                                   FX.deferAction(function():Void { main.showChartDisplay()});
-                              }
-                              else if (index==1) {
+                              } else if (index==1) {
+                                  FX.deferAction(function():Void{ main.showChartWithParametersDisplay()});
+                              } else if (index==2) {
                                   FX.deferAction(function():Void{ main.showTimeSeriesChartDisplay()});
                               }
-                              else if (index==2) {
-                                  FX.deferAction(function():Void{ main.showTabularDisplay(TabularDisplay.reportAll,null,null,null,false)});
+                              else if (index==3) {
+                                  FX.deferAction(function():Void{ main.showTabularDisplay(TabularDisplay.reportAll,null,null,null,null,false)});
                               } else{
                                 FX.deferAction(function():Void { main.showAdminDisplay()});
                               }

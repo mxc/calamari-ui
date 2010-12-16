@@ -32,10 +32,21 @@ import java.io.FileOutputStream;
 
 public  var baseUrl:String;
 
+public static def PieChartTypeUserHits="userhits";
+public static def PieChartTypeUserBytes="userbytes";
+public static def PieChartTypeDomainHits="domainhits";
+public static def PieChartTypeDomainBytes="domainbytes";
+public static def PieChartTypeUserSiteBytes="usersitebytes";
+public static def PieChartTypeUserSiteHits="usersitehits";
+
+
 public class DataService {
 
        var main:Main;
 
+       /*
+        Setup some initialisation parameters
+       */
        postinit{
                 def file = new File("calamari-ui.properties");
                 file.createNewFile();
@@ -50,19 +61,22 @@ public class DataService {
            }
 
         public function getTopSitesByHits(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
-             getChartData(startDate,endDate,count,data,"dataservice/topsitesbyhits","hits");
+             getChartData(startDate,endDate,count,data,"dataservice/topsitesbyhits",null,PieChartTypeDomainHits);
         }
 
         /*
            Main function to get Pie Chart Data
         */
-        function getChartData(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper,url:String,type:String){
+        function getChartData(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper,url:String,parameter:String,type:String){
             def begin = Utils.formatDate(startDate);
             def end = Utils.formatDate(endDate);
             def parser = ChartDataPointParser{};
-            println("{baseUrl}/{url}/{begin}/{end}/{count}");
-            var request:UIHttpRequest=UIHttpRequest{
-                location: "{baseUrl}/{url}/{begin}/{end}/{count}";
+            var tmpUrl;
+            if (parameter==null) tmpUrl="{baseUrl}/{url}/{begin}/{end}/{count}"
+            else tmpUrl = "{baseUrl}/{url}/{begin}/{end}/{parameter}/{count}";
+            println("{tmpUrl}");
+             var request:UIHttpRequest=UIHttpRequest{
+                location: tmpUrl;
                 parser: parser;
                 onException:function(ex:Exception){
                        data.error=true;
@@ -76,17 +90,26 @@ public class DataService {
                         var tmpData =PieChart.Data{
                             label:point.name.replace("http://","");
                         }
-                        if(type=="hits") {
+                        if(type==PieChartTypeUserHits or type==PieChartTypeDomainHits or type==PieChartTypeUserSiteHits) {
                              tmpData.value=point.hits;
                            }else{
                              tmpData.value=point.bytes/(1024*1024);
                         }
-                        if (url.indexOf("site")!=-1) {
-                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportDomainDetail,tmpData.label,startDate,endDate,true);};
+                        if (type==PieChartTypeDomainHits or type==PieChartTypeDomainBytes) {
+                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportDomainDetail,tmpData.label,null,startDate,endDate,true);};
                         }
-                        else {
-                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDetail,tmpData.label,startDate,endDate,true);};
+                        else if (type==PieChartTypeUserHits or type==PieChartTypeUserBytes){
+                                tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDetail,tmpData.label,null,startDate,endDate,true);};
+                        }else if (type==PieChartTypeUserSiteHits or type==PieChartTypeUserSiteBytes){
+
+                               if (url.indexOf("foruser")!=-1) {
+                                       tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDomainDetail,parameter,tmpData.label,startDate,endDate,true);};
+                               }
+                               else if (url.indexOf("ofsite")!=-1){
+                                   tmpData.action=function(){ main.showTabularDisplay(TabularDisplay.reportUserDomainDetail,tmpData.label,parameter,startDate,endDate,true);};
+                               }
                         }
+
                         insert tmpData into data.list;
                     }
                     data.done=true;
@@ -102,15 +125,15 @@ public class DataService {
         }
 
         public function getTopSitesBySize(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
-             getChartData(startDate,endDate,count,data,"dataservice/topsitesbysize","bytes");
+             getChartData(startDate,endDate,count,data,"dataservice/topsitesbysize",null,PieChartTypeDomainBytes);
         }
 
         public function getTopUsersBySize(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
-             getChartData(startDate,endDate,count,data,"dataservice/topusersbysize","bytes");
+             getChartData(startDate,endDate,count,data,"dataservice/topusersbysize",null,PieChartTypeUserBytes);
         }
 
         public function getTopUsersByHits(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,data:ChartDataListWrapper){
-             getChartData(startDate,endDate,count,data,"dataservice/topusersbyhits","hits");
+             getChartData(startDate,endDate,count,data,"dataservice/topusersbyhits",null,PieChartTypeUserHits);
         }
 
         public function getUserDetails(startDate:GregorianCalendar,endDate:GregorianCalendar,username:String,data:SquidLogRecordListWrapper){
@@ -128,6 +151,12 @@ public class DataService {
         public function getContentTypeDetails(startDate:GregorianCalendar,endDate:GregorianCalendar,contentType:String,data:SquidLogRecordListWrapper){
              getSquidLogDetailData(startDate,endDate,"dataservice/contenttypedetails",contentType,data);
         }
+
+        public function getUserDomainDetails(startDate:GregorianCalendar,endDate:GregorianCalendar,username:String,domain:String,data:SquidLogRecordListWrapper){
+               getSquidLogDetailData(startDate,endDate,"dataservice/domainuserdetails","{domain}/{username}",data);
+        }
+
+
 
         /**
            Function to retrieve simple sring results from web service
@@ -213,6 +242,9 @@ public class DataService {
             request.start();
         }
 
+        /*
+            function to save log file location to back-end server
+        */
         public function saveAdminData(location:String,result:StringResultWrapper){
             def urlConverter = URLConverter{};
             def encodedMessage = urlConverter.encodeParameters(Pair{name:"path" value:location});
@@ -255,7 +287,9 @@ public class DataService {
             request.start();
         }
 
-
+        /*
+            retrieve config info from backend server
+        */
         public function getAdminData(url:String,param:String,data:StringResultWrapper){
             var result:String;
             var tmpUrl = "{baseUrl}/{url}";
@@ -405,11 +439,11 @@ public class DataService {
 
                         if (url.indexOf("domain")!=-1){
                                 tmpData.action=function(){
-                                   main.showTabularDisplay(TabularDisplay.reportDomainDetail,parameter,tmpStartDate,tmpStartDate,true);
+                                   main.showTabularDisplay(TabularDisplay.reportDomainDetail,parameter,null,tmpStartDate,tmpStartDate,true);
                             }
                         }else{
                             tmpData.action=function(){
-                                main.showTabularDisplay(TabularDisplay.reportUserDetail,parameter,tmpStartDate,tmpStartDate,true);
+                                main.showTabularDisplay(TabularDisplay.reportUserDetail,parameter,null,tmpStartDate,tmpStartDate,true);
                             }
                         }
 
@@ -433,4 +467,22 @@ public class DataService {
             }
             request.start();
         }
+
+        public function getTopSitesBySizeForUser(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,username:String,data:ChartDataListWrapper){
+              this.getChartData(startDate,endDate,count,data,"dataservice/topsitesforuserbysize",username,PieChartTypeUserSiteBytes);
+        }
+
+        public function getTopSitesByHitsForUser(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,username:String,data:ChartDataListWrapper){
+              this.getChartData(startDate,endDate,count,data,"dataservice/topsitesforuserbyhits",username,PieChartTypeUserSiteHits);
+        }
+
+        public function getTopUsersBySizeOfSite(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,domain:String,data:ChartDataListWrapper){
+              this.getChartData(startDate,endDate,count,data,"dataservice/topusersofsitebysize",domain,PieChartTypeUserSiteBytes);
+        }
+
+        public function getTopUsersByHitsOfSite(startDate:GregorianCalendar,endDate:GregorianCalendar,count:Integer,domain:String,data:ChartDataListWrapper){
+              this.getChartData(startDate,endDate,count,data,"dataservice/topusersofsitebyhits",domain,PieChartTypeUserSiteHits);
+        }
+
+
 }
